@@ -15,7 +15,15 @@ func main() {
 		port = "8080"
 	}
 
-	mux := handler.NewRouter()
+	dataDir := os.Getenv("DATA_DIR")
+	if dataDir == "" {
+		dataDir = "./data"
+	}
+
+	mux, err := handler.NewRouter(dataDir)
+	if err != nil {
+		log.Fatalf("Failed to create router: %v", err)
+	}
 
 	log.Printf("Starting server on :%s", port)
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), mux); err != nil {
