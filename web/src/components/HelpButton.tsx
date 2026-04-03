@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { API_BASE } from "@/lib/api";
 
 interface HelpButtonProps {
 	classroomId: string;
@@ -9,11 +10,18 @@ interface HelpButtonProps {
 	onRequest?: () => void;
 }
 
-const API_BASE = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:8080";
-
 export function HelpButton({ classroomId, participantId, materialStepId, onRequest }: HelpButtonProps) {
 	const [sending, setSending] = useState(false);
 	const [sent, setSent] = useState(false);
+	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	useEffect(() => {
+		return () => {
+			if (timerRef.current !== null) {
+				clearTimeout(timerRef.current);
+			}
+		};
+	}, []);
 
 	const handleClick = useCallback(async () => {
 		if (sending || sent) return;
@@ -33,12 +41,12 @@ export function HelpButton({ classroomId, participantId, materialStepId, onReque
 			if (res.ok) {
 				setSent(true);
 				onRequest?.();
-				setTimeout(() => setSent(false), 5000);
+				timerRef.current = setTimeout(() => setSent(false), 5000);
 			}
 		} finally {
 			setSending(false);
 		}
-	}, [classroomId, participantId, materialStepId, sending, sent, onRequest]);
+	}, [classroomId, participantId, materialStepId, onRequest, sending, sent]);
 
 	return (
 		<button

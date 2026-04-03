@@ -1,10 +1,10 @@
 package service
 
 import (
-	"crypto/rand"
 	"fmt"
 	"time"
 
+	"github.com/akaitigo/digi-engawa/api/internal/id"
 	"github.com/akaitigo/digi-engawa/api/internal/model"
 	"github.com/akaitigo/digi-engawa/api/internal/repository"
 )
@@ -21,10 +21,10 @@ func (s *MaterialService) ListMaterials() []model.Material {
 	return s.repo.GetAll()
 }
 
-func (s *MaterialService) GetMaterial(id string) (model.Material, error) {
-	m, ok := s.repo.GetByID(id)
+func (s *MaterialService) GetMaterial(materialID string) (model.Material, error) {
+	m, ok := s.repo.GetByID(materialID)
 	if !ok {
-		return model.Material{}, fmt.Errorf("material not found: %s", id)
+		return model.Material{}, fmt.Errorf("material not found: %s", materialID)
 	}
 	return m, nil
 }
@@ -45,9 +45,14 @@ func (s *MaterialService) GetStep(materialID string, stepOrder int) (model.Step,
 }
 
 func (s *MaterialService) CreateMaterial(title, description string) (model.Material, error) {
+	newID, err := id.New()
+	if err != nil {
+		return model.Material{}, fmt.Errorf("generate id: %w", err)
+	}
+
 	now := time.Now()
 	m := model.Material{
-		ID:          generateID(),
+		ID:          newID,
 		Title:       title,
 		Description: description,
 		Steps:       []model.Step{},
@@ -68,8 +73,13 @@ func (s *MaterialService) AddStep(materialID string, title, body, furiganaBody, 
 		return model.Step{}, fmt.Errorf("material not found: %s", materialID)
 	}
 
+	stepID, err := id.New()
+	if err != nil {
+		return model.Step{}, fmt.Errorf("generate id: %w", err)
+	}
+
 	step := model.Step{
-		ID:           generateID(),
+		ID:           stepID,
 		MaterialID:   materialID,
 		StepOrder:    len(m.Steps) + 1,
 		Title:        title,
@@ -87,12 +97,4 @@ func (s *MaterialService) AddStep(materialID string, title, body, furiganaBody, 
 	}
 
 	return step, nil
-}
-
-func generateID() string {
-	b := make([]byte, 16)
-	if _, err := rand.Read(b); err != nil {
-		panic(fmt.Sprintf("failed to generate ID: %v", err))
-	}
-	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }

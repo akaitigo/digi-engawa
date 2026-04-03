@@ -2,9 +2,8 @@
 
 import { use, useEffect, useState } from "react";
 import { ParticipantList } from "@/components/ParticipantList";
+import { API_BASE } from "@/lib/api";
 import type { Classroom, Participant } from "@/types/classroom";
-
-const API_BASE = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:8080";
 
 export default function ClassroomDetailPage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = use(params);

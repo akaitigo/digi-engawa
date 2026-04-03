@@ -13,7 +13,7 @@ import (
 
 func setupRouter(t *testing.T) *http.ServeMux {
 	t.Helper()
-	mux, err := handler.NewRouter(t.TempDir())
+	mux, err := handler.NewRouterMux(t.TempDir())
 	if err != nil {
 		t.Fatalf("failed to create router: %v", err)
 	}

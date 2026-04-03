@@ -1,9 +1,8 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { API_BASE } from "@/lib/api";
 import type { Classroom } from "@/types/classroom";
-
-const API_BASE = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:8080";
 
 export default function JoinPage({ params }: { params: Promise<{ code: string }> }) {
 	const { code } = use(params);

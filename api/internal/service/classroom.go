@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/akaitigo/digi-engawa/api/internal/id"
 	"github.com/akaitigo/digi-engawa/api/internal/model"
 	"github.com/akaitigo/digi-engawa/api/internal/repository"
 )
@@ -19,14 +20,19 @@ func NewClassroomService(repo *repository.ClassroomRepository) *ClassroomService
 }
 
 func (s *ClassroomService) Create(title, description, location string, capacity int, scheduledAt time.Time) (model.Classroom, error) {
-	now := time.Now()
+	newID, err := id.New()
+	if err != nil {
+		return model.Classroom{}, fmt.Errorf("generate id: %w", err)
+	}
+
 	code, err := generateClassroomCode()
 	if err != nil {
 		return model.Classroom{}, fmt.Errorf("generate code: %w", err)
 	}
 
+	now := time.Now()
 	c := model.Classroom{
-		ID:            generateID(),
+		ID:            newID,
 		Title:         title,
 		Description:   description,
 		Location:      location,
@@ -48,10 +54,10 @@ func (s *ClassroomService) List() []model.Classroom {
 	return s.repo.GetAllClassrooms()
 }
 
-func (s *ClassroomService) Get(id string) (model.Classroom, error) {
-	c, ok := s.repo.GetClassroomByID(id)
+func (s *ClassroomService) Get(classroomID string) (model.Classroom, error) {
+	c, ok := s.repo.GetClassroomByID(classroomID)
 	if !ok {
-		return model.Classroom{}, fmt.Errorf("classroom not found: %s", id)
+		return model.Classroom{}, fmt.Errorf("classroom not found: %s", classroomID)
 	}
 	return c, nil
 }
@@ -74,8 +80,13 @@ func (s *ClassroomService) AddParticipant(classroomID, name, role string) (model
 		return model.Participant{}, fmt.Errorf("invalid role: %s (must be learner, supporter, or organizer)", role)
 	}
 
+	partID, err := id.New()
+	if err != nil {
+		return model.Participant{}, fmt.Errorf("generate id: %w", err)
+	}
+
 	p := model.Participant{
-		ID:          generateID(),
+		ID:          partID,
 		ClassroomID: classroomID,
 		Name:        name,
 		Role:        role,

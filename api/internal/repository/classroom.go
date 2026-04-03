@@ -84,7 +84,13 @@ func (r *ClassroomRepository) GetParticipants(classroomID string) []model.Partic
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	return r.participants[classroomID]
+	src := r.participants[classroomID]
+	if len(src) == 0 {
+		return []model.Participant{}
+	}
+	result := make([]model.Participant, len(src))
+	copy(result, src)
+	return result
 }
 
 type classroomData struct {

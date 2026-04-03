@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { API_BASE, WS_BASE } from "@/lib/api";
 import type { HelpRequest } from "@/types/help";
 import { HelpRequestCard } from "./HelpRequestCard";
 
@@ -8,12 +9,12 @@ interface HelpBoardProps {
 	classroomId: string;
 }
 
-const API_BASE = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:8080";
-const WS_BASE = process.env["NEXT_PUBLIC_WS_URL"] ?? "ws://localhost:8080/ws";
+const MAX_RECONNECT_DELAY = 30000;
 
 export function HelpBoard({ classroomId }: HelpBoardProps) {
 	const [requests, setRequests] = useState<HelpRequest[]>([]);
 	const [connected, setConnected] = useState(false);
+	const reconnectDelay = useRef(1000);
 
 	useEffect(() => {
 		const loadInitial = async () => {
@@ -24,40 +25,66 @@ export function HelpBoard({ classroomId }: HelpBoardProps) {
 					setRequests(data);
 				}
 			} catch {
-				// Silently fail for initial load
+				// Initial load failure is non-critical
 			}
 		};
 		void loadInitial();
 	}, [classroomId]);
 
 	useEffect(() => {
-		const wsUrl = `${WS_BASE}/classroom/${classroomId}`;
 		let socket: WebSocket | null = null;
+		let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+		let unmounted = false;
 
-		try {
-			socket = new WebSocket(wsUrl);
+		const connect = () => {
+			if (unmounted) return;
 
-			socket.onopen = () => setConnected(true);
-			socket.onclose = () => setConnected(false);
-			socket.onerror = () => setConnected(false);
+			try {
+				socket = new WebSocket(`${WS_BASE}/classroom/${classroomId}`);
 
-			socket.onmessage = (event) => {
-				try {
-					const msg = JSON.parse(String(event.data)) as { type: string; data: HelpRequest };
-					if (msg.type === "help_request_created") {
-						setRequests((prev) => [...prev, msg.data]);
-					} else if (msg.type === "help_request_updated") {
-						setRequests((prev) => prev.map((r) => (r.id === msg.data.id ? msg.data : r)));
+				socket.onopen = () => {
+					if (!unmounted) {
+						setConnected(true);
+						reconnectDelay.current = 1000;
 					}
-				} catch {
-					// Ignore malformed messages
-				}
-			};
-		} catch {
-			// WebSocket not available
-		}
+				};
+
+				socket.onclose = () => {
+					if (!unmounted) {
+						setConnected(false);
+						reconnectTimer = setTimeout(() => {
+							reconnectDelay.current = Math.min(reconnectDelay.current * 2, MAX_RECONNECT_DELAY);
+							connect();
+						}, reconnectDelay.current);
+					}
+				};
+
+				socket.onerror = () => {
+					socket?.close();
+				};
+
+				socket.onmessage = (event) => {
+					try {
+						const msg = JSON.parse(String(event.data)) as { type: string; data: HelpRequest };
+						if (msg.type === "help_request_created") {
+							setRequests((prev) => [...prev, msg.data]);
+						} else if (msg.type === "help_request_updated") {
+							setRequests((prev) => prev.map((r) => (r.id === msg.data.id ? msg.data : r)));
+						}
+					} catch {
+						// Ignore malformed messages
+					}
+				};
+			} catch {
+				// WebSocket not available
+			}
+		};
+
+		connect();
 
 		return () => {
+			unmounted = true;
+			if (reconnectTimer !== null) clearTimeout(reconnectTimer);
 			socket?.close();
 		};
 	}, [classroomId]);
@@ -75,7 +102,7 @@ export function HelpBoard({ classroomId }: HelpBoardProps) {
 				setRequests((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
 			}
 		} catch {
-			// Silently fail
+			// Network failure
 		}
 	}, []);
 
@@ -95,6 +122,8 @@ export function HelpBoard({ classroomId }: HelpBoardProps) {
 			>
 				<h2 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>ヘルプボード</h2>
 				<span
+					role="status"
+					aria-label={connected ? "サーバーに接続中" : "サーバーに未接続"}
 					style={{
 						fontSize: "0.875rem",
 						padding: "4px 8px",
@@ -116,7 +145,7 @@ export function HelpBoard({ classroomId }: HelpBoardProps) {
 						<HelpRequestCard
 							key={r.id}
 							request={r}
-							onStatusChange={(id, status) => void handleStatusChange(id, status)}
+							onStatusChange={(reqId, status) => void handleStatusChange(reqId, status)}
 						/>
 					))}
 				</section>
@@ -131,7 +160,7 @@ export function HelpBoard({ classroomId }: HelpBoardProps) {
 						<HelpRequestCard
 							key={r.id}
 							request={r}
-							onStatusChange={(id, status) => void handleStatusChange(id, status)}
+							onStatusChange={(reqId, status) => void handleStatusChange(reqId, status)}
 						/>
 					))}
 				</section>

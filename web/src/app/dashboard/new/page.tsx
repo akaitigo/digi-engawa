@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import type { ClassroomFormData } from "@/components/ClassroomForm";
 import { ClassroomForm } from "@/components/ClassroomForm";
 
-const API_BASE = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:8080";
+import { API_BASE } from "@/lib/api";
 
 export default function NewClassroomPage() {
 	const [submitting, setSubmitting] = useState(false);
