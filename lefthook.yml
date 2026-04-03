@@ -1,0 +1,11 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint-web:
+      run: cd web && npx biome check .
+    lint-api:
+      run: cd api && golangci-lint run ./...
+    test-web:
+      run: cd web && npx vitest run --passWithNoTests
+    test-api:
+      run: cd api && go test -race -count=1 ./...
