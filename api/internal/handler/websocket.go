@@ -11,8 +11,7 @@ import (
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		// TODO: restrict to allowed origins in production
-		return true
+		return r.Header.Get("Origin") != ""
 	},
 }
 
@@ -48,7 +47,7 @@ func (h *WebSocketHandler) handleClassroom(w http.ResponseWriter, r *http.Reques
 		defer func() {
 			h.hub.Leave(classroomID, client)
 			client.Close()
-			conn.Close()
+			_ = conn.Close()
 		}()
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {
@@ -58,7 +57,7 @@ func (h *WebSocketHandler) handleClassroom(w http.ResponseWriter, r *http.Reques
 	}()
 
 	go func() {
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 		for msg := range client.Messages() {
 			if err := conn.WriteMessage(websocket.TextMessage, msg); err != nil {
 				return
