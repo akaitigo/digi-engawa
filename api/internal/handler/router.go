@@ -1,11 +1,25 @@
 package handler
 
-import "net/http"
+import (
+	"net/http"
 
-func NewRouter() *http.ServeMux {
+	"github.com/akaitigo/digi-engawa/api/internal/repository"
+	"github.com/akaitigo/digi-engawa/api/internal/service"
+)
+
+func NewRouter(dataDir string) (*http.ServeMux, error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", handleHealth)
-	return mux
+
+	materialRepo, err := repository.NewMaterialRepository(dataDir)
+	if err != nil {
+		return nil, err
+	}
+	materialSvc := service.NewMaterialService(materialRepo)
+	materialHandler := NewMaterialHandler(materialSvc)
+	materialHandler.Register(mux)
+
+	return mux, nil
 }
 
 func handleHealth(w http.ResponseWriter, _ *http.Request) {

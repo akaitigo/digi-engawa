@@ -9,7 +9,11 @@ import (
 )
 
 func TestHealthEndpoint(t *testing.T) {
-	mux := handler.NewRouter()
+	mux, err := handler.NewRouter(t.TempDir())
+	if err != nil {
+		t.Fatalf("failed to create router: %v", err)
+	}
+
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
 
