@@ -25,6 +25,7 @@
 		"rules": {
 			"recommended": true,
 			"complexity": {
+				"useLiteralKeys": "off",
 				"noBannedTypes": "error",
 				"noExcessiveCognitiveComplexity": {
 					"level": "warn",
