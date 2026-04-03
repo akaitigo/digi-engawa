@@ -1,10 +1,10 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { StepViewer } from "@/components/StepViewer";
 import type { Material } from "@/types/material";
-import { useCallback, useEffect, useState } from "react";
 
-const API_BASE = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:8080";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 export default function MaterialViewerPage({ params }: { params: Promise<{ id: string }> }) {
 	const [material, setMaterial] = useState<Material | null>(null);

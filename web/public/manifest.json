@@ -1,10 +1,10 @@
 {
-  "name": "デジタル縁側",
-  "short_name": "縁側",
-  "description": "公民館・地域サロンで開催するデジタル教室の運営プラットフォーム",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4A7C59",
-  "icons": []
+	"name": "デジタル縁側",
+	"short_name": "縁側",
+	"description": "公民館・地域サロンで開催するデジタル教室の運営プラットフォーム",
+	"start_url": "/",
+	"display": "standalone",
+	"background_color": "#ffffff",
+	"theme_color": "#4A7C59",
+	"icons": []
 }

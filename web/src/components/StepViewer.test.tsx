@@ -1,7 +1,7 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { StepViewer } from "./StepViewer";
 import type { Step } from "@/types/material";
+import { StepViewer } from "./StepViewer";
 
 const mockSteps: Step[] = [
 	{
