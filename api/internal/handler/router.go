@@ -30,6 +30,14 @@ func NewRouter(dataDir string) (*http.ServeMux, error) {
 	helpHandler := NewHelpRequestHandler(helpSvc)
 	helpHandler.Register(mux)
 
+	classroomRepo, err := repository.NewClassroomRepository(dataDir)
+	if err != nil {
+		return nil, err
+	}
+	classroomSvc := service.NewClassroomService(classroomRepo)
+	classroomHandler := NewClassroomHandler(classroomSvc)
+	classroomHandler.Register(mux)
+
 	return mux, nil
 }
 
