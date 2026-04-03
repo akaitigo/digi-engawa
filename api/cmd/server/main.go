@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/akaitigo/digi-engawa/api/internal/handler"
 )
@@ -25,8 +26,17 @@ func main() {
 		log.Fatalf("Failed to create router: %v", err)
 	}
 
+	srv := &http.Server{
+		Addr:              fmt.Sprintf(":%s", port),
+		Handler:           h,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+
 	log.Printf("Starting server on :%s", port)
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), h); err != nil {
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }

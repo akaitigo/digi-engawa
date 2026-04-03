@@ -33,7 +33,7 @@ func (h *MaterialHandler) handleGet(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	m, err := h.svc.GetMaterial(id)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 		return
 	}
 	writeJSON(w, http.StatusOK, m)
@@ -51,7 +51,7 @@ func (h *MaterialHandler) handleGetStep(w http.ResponseWriter, r *http.Request) 
 
 	step, err := h.svc.GetStep(id, order)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 		return
 	}
 	writeJSON(w, http.StatusOK, step)

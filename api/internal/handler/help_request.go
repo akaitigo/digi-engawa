@@ -63,7 +63,7 @@ func (h *HelpRequestHandler) handleUpdateStatus(w http.ResponseWriter, r *http.R
 
 	hr, err := h.svc.UpdateStatus(id, req.Status)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request"})
 		return
 	}
 	writeJSON(w, http.StatusOK, hr)

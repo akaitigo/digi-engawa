@@ -13,6 +13,7 @@ interface HelpButtonProps {
 export function HelpButton({ classroomId, participantId, materialStepId, onRequest }: HelpButtonProps) {
 	const [sending, setSending] = useState(false);
 	const [sent, setSent] = useState(false);
+	const [error, setError] = useState(false);
 	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	useEffect(() => {
@@ -27,6 +28,7 @@ export function HelpButton({ classroomId, participantId, materialStepId, onReque
 		if (sending || sent) return;
 
 		setSending(true);
+		setError(false);
 		try {
 			const res = await fetch(`${API_BASE}/api/help-requests`, {
 				method: "POST",
@@ -42,18 +44,26 @@ export function HelpButton({ classroomId, participantId, materialStepId, onReque
 				setSent(true);
 				onRequest?.();
 				timerRef.current = setTimeout(() => setSent(false), 5000);
+			} else {
+				setError(true);
+				timerRef.current = setTimeout(() => setError(false), 3000);
 			}
+		} catch {
+			setError(true);
+			timerRef.current = setTimeout(() => setError(false), 3000);
 		} finally {
 			setSending(false);
 		}
 	}, [classroomId, participantId, materialStepId, onRequest, sending, sent]);
+
+	const label = error ? "もういちど" : sent ? "✓ よびました" : "🆘 こまった！";
 
 	return (
 		<button
 			type="button"
 			onClick={() => void handleClick()}
 			disabled={sending}
-			aria-label="助けを呼ぶ"
+			aria-label={error ? "もう一度助けを呼ぶ" : "助けを呼ぶ"}
 			style={{
 				width: "100%",
 				maxWidth: "400px",
@@ -62,16 +72,16 @@ export function HelpButton({ classroomId, participantId, materialStepId, onReque
 				fontWeight: "bold",
 				minHeight: "80px",
 				borderRadius: "16px",
-				border: "3px solid #d32f2f",
-				backgroundColor: sent ? "#e8f5e9" : sending ? "#ffebee" : "#d32f2f",
-				color: sent ? "#2e7d32" : "#ffffff",
+				border: `3px solid ${error ? "#ff9800" : "#d32f2f"}`,
+				backgroundColor: sent ? "#e8f5e9" : error ? "#fff3e0" : sending ? "#ffebee" : "#d32f2f",
+				color: sent ? "#2e7d32" : error ? "#e65100" : "#ffffff",
 				cursor: sending ? "wait" : "pointer",
 				transition: "all 0.3s",
 				display: "block",
 				margin: "1rem auto",
 			}}
 		>
-			{sent ? "✓ よびました" : "🆘 こまった！"}
+			{label}
 		</button>
 	);
 }
