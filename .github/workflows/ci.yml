@@ -37,7 +37,7 @@ jobs:
           cache-dependency-path: api/go.sum
       - run: go test -v -race -count=1 ./...
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v9
         with:
           working-directory: api
 
