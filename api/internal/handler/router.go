@@ -38,6 +38,13 @@ func NewRouter(dataDir string) (*http.ServeMux, error) {
 	classroomHandler := NewClassroomHandler(classroomSvc)
 	classroomHandler.Register(mux)
 
+	progressRepo, err := repository.NewProgressRepository(dataDir)
+	if err != nil {
+		return nil, err
+	}
+	progressHandler := NewProgressHandler(progressRepo, classroomRepo, hub)
+	progressHandler.Register(mux)
+
 	return mux, nil
 }
 
