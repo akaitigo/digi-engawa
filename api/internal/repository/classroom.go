@@ -126,10 +126,6 @@ func (r *ClassroomRepository) loadFromDisk() error {
 }
 
 func (r *ClassroomRepository) saveToDisk() error {
-	if err := os.MkdirAll(r.dataDir, 0o755); err != nil {
-		return err
-	}
-
 	classrooms := make([]model.Classroom, 0, len(r.classrooms))
 	for _, c := range r.classrooms {
 		classrooms = append(classrooms, c)
@@ -145,5 +141,5 @@ func (r *ClassroomRepository) saveToDisk() error {
 		return err
 	}
 
-	return os.WriteFile(r.dataFilePath(), data, 0o644)
+	return atomicWriteFile(r.dataFilePath(), data, 0o600)
 }

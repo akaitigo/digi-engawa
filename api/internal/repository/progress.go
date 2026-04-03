@@ -87,10 +87,6 @@ func (r *ProgressRepository) loadFromDisk() error {
 }
 
 func (r *ProgressRepository) saveToDisk() error {
-	if err := os.MkdirAll(r.dataDir, 0o755); err != nil {
-		return err
-	}
-
 	items := make([]model.LearnerProgress, 0, len(r.progress))
 	for _, p := range r.progress {
 		items = append(items, p)
@@ -101,5 +97,5 @@ func (r *ProgressRepository) saveToDisk() error {
 		return err
 	}
 
-	return os.WriteFile(r.dataFilePath(), data, 0o644)
+	return atomicWriteFile(r.dataFilePath(), data, 0o600)
 }

@@ -55,7 +55,7 @@ func (h *ClassroomHandler) handleCreate(w http.ResponseWriter, r *http.Request) 
 
 	c, err := h.svc.Create(req.Title, req.Description, req.Location, req.Capacity, scheduledAt)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
 	}
 	writeJSON(w, http.StatusCreated, c)
@@ -71,7 +71,7 @@ func (h *ClassroomHandler) handleGet(w http.ResponseWriter, r *http.Request) {
 
 	c, err := h.svc.Get(id)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 		return
 	}
 	writeJSON(w, http.StatusOK, c)
@@ -96,7 +96,7 @@ func (h *ClassroomHandler) handleAddParticipant(w http.ResponseWriter, r *http.R
 
 	p, err := h.svc.AddParticipant(classroomID, req.Name, req.Role)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request"})
 		return
 	}
 	writeJSON(w, http.StatusCreated, p)
@@ -112,7 +112,7 @@ func (h *ClassroomHandler) handleJoinByCode(w http.ResponseWriter, r *http.Reque
 	code := r.PathValue("code")
 	c, err := h.svc.GetByCode(code)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 		return
 	}
 	writeJSON(w, http.StatusOK, c)

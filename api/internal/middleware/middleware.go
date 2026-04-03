@@ -28,6 +28,10 @@ func CORS(next http.Handler) http.Handler {
 		}
 
 		if r.Method == http.MethodOptions {
+			if origin == "" || !isAllowedOrigin(origin, allowedOrigin) {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
@@ -51,6 +55,7 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("X-XSS-Protection", "0")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
 		next.ServeHTTP(w, r)
 	})
 }

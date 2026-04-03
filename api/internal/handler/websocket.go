@@ -3,24 +3,50 @@ package handler
 import (
 	"log"
 	"net/http"
+	"os"
+	"strings"
+	"sync"
 
 	"github.com/gorilla/websocket"
 
+	"github.com/akaitigo/digi-engawa/api/internal/repository"
 	appws "github.com/akaitigo/digi-engawa/api/internal/ws"
 )
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return r.Header.Get("Origin") != ""
-	},
+func newUpgrader() websocket.Upgrader {
+	allowedOrigin := os.Getenv("CORS_ORIGIN")
+	if allowedOrigin == "" {
+		allowedOrigin = "http://localhost:3000"
+	}
+
+	return websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			origin := r.Header.Get("Origin")
+			if origin == "" {
+				return false
+			}
+			for _, o := range strings.Split(allowedOrigin, ",") {
+				if strings.TrimSpace(o) == origin {
+					return true
+				}
+			}
+			return false
+		},
+	}
 }
 
 type WebSocketHandler struct {
-	hub *appws.Hub
+	hub           *appws.Hub
+	classroomRepo *repository.ClassroomRepository
+	upgrader      websocket.Upgrader
 }
 
-func NewWebSocketHandler(hub *appws.Hub) *WebSocketHandler {
-	return &WebSocketHandler{hub: hub}
+func NewWebSocketHandler(hub *appws.Hub, classroomRepo *repository.ClassroomRepository) *WebSocketHandler {
+	return &WebSocketHandler{
+		hub:           hub,
+		classroomRepo: classroomRepo,
+		upgrader:      newUpgrader(),
+	}
 }
 
 func (h *WebSocketHandler) Register(mux *http.ServeMux) {
@@ -34,32 +60,47 @@ func (h *WebSocketHandler) handleClassroom(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	conn, err := upgrader.Upgrade(w, r, nil)
+	if _, ok := h.classroomRepo.GetClassroomByID(classroomID); !ok {
+		http.Error(w, "classroom not found", http.StatusNotFound)
+		return
+	}
+
+	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("websocket upgrade: %v", err)
 		return
 	}
+	conn.SetReadLimit(4096)
 
 	client := appws.NewClient()
-	h.hub.Join(classroomID, client)
+	if err := h.hub.Join(classroomID, client); err != nil {
+		log.Printf("websocket join: %v", err)
+		_ = conn.Close()
+		return
+	}
 
-	go func() {
-		defer func() {
+	var closeOnce sync.Once
+	cleanup := func() {
+		closeOnce.Do(func() {
 			h.hub.Leave(classroomID, client)
 			client.Close()
 			_ = conn.Close()
-		}()
+		})
+	}
+
+	go func() {
+		defer cleanup()
 		for {
-			if _, _, err := conn.ReadMessage(); err != nil {
+			if _, _, readErr := conn.ReadMessage(); readErr != nil {
 				return
 			}
 		}
 	}()
 
 	go func() {
-		defer func() { _ = conn.Close() }()
+		defer cleanup()
 		for msg := range client.Messages() {
-			if err := conn.WriteMessage(websocket.TextMessage, msg); err != nil {
+			if writeErr := conn.WriteMessage(websocket.TextMessage, msg); writeErr != nil {
 				return
 			}
 		}

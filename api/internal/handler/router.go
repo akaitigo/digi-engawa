@@ -48,7 +48,7 @@ func NewRouter(dataDir string) (http.Handler, error) {
 	progressHandler := NewProgressHandler(progressSvc)
 	progressHandler.Register(mux)
 
-	wsHandler := NewWebSocketHandler(hub)
+	wsHandler := NewWebSocketHandler(hub, classroomRepo)
 	wsHandler.Register(mux)
 
 	return middleware.Chain(mux), nil

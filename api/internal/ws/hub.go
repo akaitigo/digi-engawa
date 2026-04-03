@@ -2,8 +2,16 @@ package ws
 
 import (
 	"encoding/json"
+	"errors"
 	"sync"
 )
+
+const (
+	MaxClientsPerRoom = 100
+	MaxTotalClients   = 1000
+)
+
+var ErrRoomFull = errors.New("room connection limit reached")
 
 type Message struct {
 	Type string      `json:"type"`
@@ -11,8 +19,9 @@ type Message struct {
 }
 
 type Hub struct {
-	mu    sync.RWMutex
-	rooms map[string]map[*Client]bool
+	mu          sync.RWMutex
+	rooms       map[string]map[*Client]bool
+	totalCount  int
 }
 
 func NewHub() *Hub {
@@ -21,14 +30,24 @@ func NewHub() *Hub {
 	}
 }
 
-func (h *Hub) Join(roomID string, client *Client) {
+func (h *Hub) Join(roomID string, client *Client) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+
+	if h.totalCount >= MaxTotalClients {
+		return ErrRoomFull
+	}
 
 	if h.rooms[roomID] == nil {
 		h.rooms[roomID] = make(map[*Client]bool)
 	}
+	if len(h.rooms[roomID]) >= MaxClientsPerRoom {
+		return ErrRoomFull
+	}
+
 	h.rooms[roomID][client] = true
+	h.totalCount++
+	return nil
 }
 
 func (h *Hub) Leave(roomID string, client *Client) {
@@ -36,7 +55,10 @@ func (h *Hub) Leave(roomID string, client *Client) {
 	defer h.mu.Unlock()
 
 	if clients, ok := h.rooms[roomID]; ok {
-		delete(clients, client)
+		if clients[client] {
+			delete(clients, client)
+			h.totalCount--
+		}
 		if len(clients) == 0 {
 			delete(h.rooms, roomID)
 		}

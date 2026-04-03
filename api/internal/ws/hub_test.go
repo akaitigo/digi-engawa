@@ -12,7 +12,9 @@ func TestHubJoinAndBroadcast(t *testing.T) {
 	client := ws.NewClient()
 	defer client.Close()
 
-	hub.Join("room-1", client)
+	if err := hub.Join("room-1", client); err != nil {
+		t.Fatalf("join: %v", err)
+	}
 
 	if hub.RoomCount("room-1") != 1 {
 		t.Errorf("expected 1 client, got %d", hub.RoomCount("room-1"))
@@ -35,7 +37,9 @@ func TestHubLeave(t *testing.T) {
 	client := ws.NewClient()
 	defer client.Close()
 
-	hub.Join("room-1", client)
+	if err := hub.Join("room-1", client); err != nil {
+		t.Fatalf("join: %v", err)
+	}
 	hub.Leave("room-1", client)
 
 	if hub.RoomCount("room-1") != 0 {
@@ -50,8 +54,12 @@ func TestHubMultipleClients(t *testing.T) {
 	defer c1.Close()
 	defer c2.Close()
 
-	hub.Join("room-1", c1)
-	hub.Join("room-1", c2)
+	if err := hub.Join("room-1", c1); err != nil {
+		t.Fatalf("join c1: %v", err)
+	}
+	if err := hub.Join("room-1", c2); err != nil {
+		t.Fatalf("join c2: %v", err)
+	}
 
 	if hub.RoomCount("room-1") != 2 {
 		t.Errorf("expected 2 clients, got %d", hub.RoomCount("room-1"))
@@ -73,10 +81,28 @@ func TestHubMultipleClients(t *testing.T) {
 
 func TestHubEmptyRoom(t *testing.T) {
 	hub := ws.NewHub()
-	// Broadcasting to empty room should not panic
 	hub.Broadcast("nonexistent", ws.Message{Type: "test", Data: "nothing"})
 
 	if hub.RoomCount("nonexistent") != 0 {
 		t.Errorf("expected 0 for empty room")
+	}
+}
+
+func TestHubRoomConnectionLimit(t *testing.T) {
+	hub := ws.NewHub()
+	clients := make([]*ws.Client, ws.MaxClientsPerRoom)
+
+	for i := range clients {
+		clients[i] = ws.NewClient()
+		defer clients[i].Close()
+		if err := hub.Join("room-limit", clients[i]); err != nil {
+			t.Fatalf("join client %d: %v", i, err)
+		}
+	}
+
+	extra := ws.NewClient()
+	defer extra.Close()
+	if err := hub.Join("room-limit", extra); err == nil {
+		t.Error("expected error when exceeding room limit")
 	}
 }

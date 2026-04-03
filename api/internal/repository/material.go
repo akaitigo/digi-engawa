@@ -83,10 +83,6 @@ func (r *MaterialRepository) loadFromDisk() error {
 }
 
 func (r *MaterialRepository) saveToDisk() error {
-	if err := os.MkdirAll(r.dataDir, 0o755); err != nil {
-		return err
-	}
-
 	materials := make([]model.Material, 0, len(r.materials))
 	for _, m := range r.materials {
 		materials = append(materials, m)
@@ -97,5 +93,5 @@ func (r *MaterialRepository) saveToDisk() error {
 		return err
 	}
 
-	return os.WriteFile(r.dataFilePath(), data, 0o644)
+	return atomicWriteFile(r.dataFilePath(), data, 0o600)
 }

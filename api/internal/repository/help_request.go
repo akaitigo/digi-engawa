@@ -85,10 +85,6 @@ func (r *HelpRequestRepository) loadFromDisk() error {
 }
 
 func (r *HelpRequestRepository) saveToDisk() error {
-	if err := os.MkdirAll(r.dataDir, 0o755); err != nil {
-		return err
-	}
-
 	requests := make([]model.HelpRequest, 0, len(r.requests))
 	for _, hr := range r.requests {
 		requests = append(requests, hr)
@@ -99,5 +95,5 @@ func (r *HelpRequestRepository) saveToDisk() error {
 		return err
 	}
 
-	return os.WriteFile(r.dataFilePath(), data, 0o644)
+	return atomicWriteFile(r.dataFilePath(), data, 0o600)
 }
