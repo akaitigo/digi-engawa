@@ -44,18 +44,20 @@ func (h *Hub) Leave(roomID string, client *Client) {
 }
 
 func (h *Hub) Broadcast(roomID string, msg Message) {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
-
 	data, err := json.Marshal(msg)
 	if err != nil {
 		return
 	}
 
-	if clients, ok := h.rooms[roomID]; ok {
-		for client := range clients {
-			client.Send(data)
-		}
+	h.mu.RLock()
+	clients := make([]*Client, 0, len(h.rooms[roomID]))
+	for client := range h.rooms[roomID] {
+		clients = append(clients, client)
+	}
+	h.mu.RUnlock()
+
+	for _, client := range clients {
+		client.Send(data)
 	}
 }
 

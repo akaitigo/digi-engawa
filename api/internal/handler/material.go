@@ -74,7 +74,7 @@ func (h *MaterialHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 
 	m, err := h.svc.CreateMaterial(req.Title, req.Description)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
 	}
 	writeJSON(w, http.StatusCreated, m)
@@ -101,7 +101,7 @@ func (h *MaterialHandler) handleAddStep(w http.ResponseWriter, r *http.Request) 
 
 	step, err := h.svc.AddStep(id, req.Title, req.Body, req.FuriganaBody, req.AudioText)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
 	}
 	writeJSON(w, http.StatusCreated, step)

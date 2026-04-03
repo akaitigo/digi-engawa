@@ -1,25 +1,18 @@
 package handler
 
 import (
-	"crypto/rand"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/akaitigo/digi-engawa/api/internal/model"
-	"github.com/akaitigo/digi-engawa/api/internal/repository"
-	"github.com/akaitigo/digi-engawa/api/internal/ws"
+	"github.com/akaitigo/digi-engawa/api/internal/service"
 )
 
 type ProgressHandler struct {
-	repo          *repository.ProgressRepository
-	classroomRepo *repository.ClassroomRepository
-	hub           *ws.Hub
+	svc *service.ProgressService
 }
 
-func NewProgressHandler(repo *repository.ProgressRepository, classroomRepo *repository.ClassroomRepository, hub *ws.Hub) *ProgressHandler {
-	return &ProgressHandler{repo: repo, classroomRepo: classroomRepo, hub: hub}
+func NewProgressHandler(svc *service.ProgressService) *ProgressHandler {
+	return &ProgressHandler{svc: svc}
 }
 
 func (h *ProgressHandler) Register(mux *http.ServeMux) {
@@ -45,31 +38,10 @@ func (h *ProgressHandler) handleUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existing, found := h.repo.Get(req.ParticipantID, req.MaterialID)
-	id := newID()
-	if found {
-		id = existing.ID
-	}
-
-	p := model.LearnerProgress{
-		ID:            id,
-		ParticipantID: req.ParticipantID,
-		MaterialID:    req.MaterialID,
-		CurrentStep:   req.CurrentStep,
-		Completed:     req.Completed,
-		UpdatedAt:     time.Now(),
-	}
-
-	if err := h.repo.Upsert(p); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	p, err := h.svc.Update(req.ParticipantID, req.MaterialID, req.ClassroomID, req.CurrentStep, req.Completed)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
-	}
-
-	if req.ClassroomID != "" {
-		h.hub.Broadcast(req.ClassroomID, ws.Message{
-			Type: "progress_updated",
-			Data: p,
-		})
 	}
 
 	writeJSON(w, http.StatusOK, p)
@@ -77,21 +49,6 @@ func (h *ProgressHandler) handleUpdate(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProgressHandler) handleGetByClassroom(w http.ResponseWriter, r *http.Request) {
 	classroomID := r.PathValue("id")
-
-	participants := h.classroomRepo.GetParticipants(classroomID)
-	ids := make([]string, len(participants))
-	for i, p := range participants {
-		ids[i] = p.ID
-	}
-
-	progress := h.repo.GetByClassroom(ids)
+	progress := h.svc.ListByClassroom(classroomID)
 	writeJSON(w, http.StatusOK, progress)
-}
-
-func newID() string {
-	b := make([]byte, 16)
-	if _, err := rand.Read(b); err != nil {
-		panic(fmt.Sprintf("failed to generate ID: %v", err))
-	}
-	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }

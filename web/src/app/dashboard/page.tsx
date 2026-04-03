@@ -2,22 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { ClassroomCard } from "@/components/ClassroomCard";
+import { fetchAPI } from "@/lib/api";
 import type { Classroom } from "@/types/classroom";
-
-const API_BASE = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:8080";
 
 export default function DashboardPage() {
 	const [classrooms, setClassrooms] = useState<Classroom[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		const load = async () => {
 			try {
-				const res = await fetch(`${API_BASE}/api/classrooms`);
-				if (res.ok) {
-					const data = (await res.json()) as Classroom[];
-					setClassrooms(data);
-				}
+				const data = await fetchAPI<Classroom[]>("/api/classrooms");
+				setClassrooms(data);
+			} catch (e) {
+				setError(e instanceof Error ? e.message : "読み込みエラー");
 			} finally {
 				setLoading(false);
 			}
@@ -29,6 +28,14 @@ export default function DashboardPage() {
 		return (
 			<main style={{ padding: "2rem", textAlign: "center" }}>
 				<p style={{ fontSize: "1.5rem" }}>よみこみちゅう...</p>
+			</main>
+		);
+	}
+
+	if (error) {
+		return (
+			<main style={{ padding: "2rem", textAlign: "center" }}>
+				<p style={{ fontSize: "1.5rem", color: "#d32f2f" }}>{error}</p>
 			</main>
 		);
 	}

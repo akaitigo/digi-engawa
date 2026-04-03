@@ -20,13 +20,13 @@ func main() {
 		dataDir = "./data"
 	}
 
-	mux, err := handler.NewRouter(dataDir)
+	h, err := handler.NewRouter(dataDir)
 	if err != nil {
 		log.Fatalf("Failed to create router: %v", err)
 	}
 
 	log.Printf("Starting server on :%s", port)
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), mux); err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), h); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }

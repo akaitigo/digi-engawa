@@ -39,7 +39,7 @@ func (h *HelpRequestHandler) handleCreate(w http.ResponseWriter, r *http.Request
 
 	hr, err := h.svc.Create(req.ClassroomID, req.ParticipantID, req.MaterialStepID)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
 	}
 	writeJSON(w, http.StatusCreated, hr)

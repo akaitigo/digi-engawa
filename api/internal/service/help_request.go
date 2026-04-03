@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/akaitigo/digi-engawa/api/internal/id"
 	"github.com/akaitigo/digi-engawa/api/internal/model"
 	"github.com/akaitigo/digi-engawa/api/internal/repository"
 	"github.com/akaitigo/digi-engawa/api/internal/ws"
@@ -19,9 +20,14 @@ func NewHelpRequestService(repo *repository.HelpRequestRepository, hub *ws.Hub) 
 }
 
 func (s *HelpRequestService) Create(classroomID, participantID, materialStepID string) (model.HelpRequest, error) {
+	newID, err := id.New()
+	if err != nil {
+		return model.HelpRequest{}, fmt.Errorf("generate id: %w", err)
+	}
+
 	now := time.Now()
 	hr := model.HelpRequest{
-		ID:             generateID(),
+		ID:             newID,
 		ClassroomID:    classroomID,
 		ParticipantID:  participantID,
 		MaterialStepID: materialStepID,
@@ -41,10 +47,10 @@ func (s *HelpRequestService) Create(classroomID, participantID, materialStepID s
 	return hr, nil
 }
 
-func (s *HelpRequestService) UpdateStatus(id, status string) (model.HelpRequest, error) {
-	hr, ok := s.repo.GetByID(id)
+func (s *HelpRequestService) UpdateStatus(requestID, status string) (model.HelpRequest, error) {
+	hr, ok := s.repo.GetByID(requestID)
 	if !ok {
-		return model.HelpRequest{}, fmt.Errorf("help request not found: %s", id)
+		return model.HelpRequest{}, fmt.Errorf("help request not found: %s", requestID)
 	}
 
 	validTransitions := map[string][]string{

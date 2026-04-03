@@ -9,7 +9,7 @@ import (
 )
 
 func TestHealthEndpoint(t *testing.T) {
-	mux, err := handler.NewRouter(t.TempDir())
+	mux, err := handler.NewRouterMux(t.TempDir())
 	if err != nil {
 		t.Fatalf("failed to create router: %v", err)
 	}

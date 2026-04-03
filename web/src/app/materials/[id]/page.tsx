@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { StepViewer } from "@/components/StepViewer";
+import { fetchAPI } from "@/lib/api";
 import type { Material } from "@/types/material";
-
-const API_BASE = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:8080";
 
 export default function MaterialViewerPage({ params }: { params: Promise<{ id: string }> }) {
 	const [material, setMaterial] = useState<Material | null>(null);
@@ -12,32 +11,27 @@ export default function MaterialViewerPage({ params }: { params: Promise<{ id: s
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
+		let cancelled = false;
 		const load = async () => {
 			const { id } = await params;
 			try {
-				const res = await fetch(`${API_BASE}/api/materials/${id}`);
-				if (!res.ok) {
-					throw new Error("教材が見つかりません");
-				}
-				const data = (await res.json()) as Material;
-				setMaterial(data);
+				const data = await fetchAPI<Material>(`/api/materials/${id}`);
+				if (!cancelled) setMaterial(data);
 			} catch (e) {
-				setError(e instanceof Error ? e.message : "読み込みエラー");
+				if (!cancelled) setError(e instanceof Error ? e.message : "読み込みエラー");
 			} finally {
-				setLoading(false);
+				if (!cancelled) setLoading(false);
 			}
 		};
 		void load();
+		return () => {
+			cancelled = true;
+		};
 	}, [params]);
 
-	const handleStepChange = useCallback(
-		(stepOrder: number) => {
-			if (!material) return;
-			// Progress tracking will be added in Issue #8
-			void stepOrder;
-		},
-		[material],
-	);
+	const handleStepChange = useCallback((_stepOrder: number) => {
+		// Progress tracking is handled via PUT /api/progress
+	}, []);
 
 	if (loading) {
 		return (

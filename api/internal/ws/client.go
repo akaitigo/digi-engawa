@@ -5,7 +5,7 @@ import (
 )
 
 type Client struct {
-	mu   sync.Mutex
+	once sync.Once
 	send chan []byte
 	done chan struct{}
 }
@@ -19,9 +19,14 @@ func NewClient() *Client {
 
 func (c *Client) Send(data []byte) {
 	select {
+	case <-c.done:
+		return
+	default:
+	}
+
+	select {
 	case c.send <- data:
 	default:
-		// Drop message if buffer is full
 	}
 }
 
@@ -30,16 +35,10 @@ func (c *Client) Messages() <-chan []byte {
 }
 
 func (c *Client) Close() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	select {
-	case <-c.done:
-		return
-	default:
+	c.once.Do(func() {
 		close(c.done)
 		close(c.send)
-	}
+	})
 }
 
 func (c *Client) Done() <-chan struct{} {
