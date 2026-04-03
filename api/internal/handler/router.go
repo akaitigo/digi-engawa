@@ -5,11 +5,14 @@ import (
 
 	"github.com/akaitigo/digi-engawa/api/internal/repository"
 	"github.com/akaitigo/digi-engawa/api/internal/service"
+	"github.com/akaitigo/digi-engawa/api/internal/ws"
 )
 
 func NewRouter(dataDir string) (*http.ServeMux, error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", handleHealth)
+
+	hub := ws.NewHub()
 
 	materialRepo, err := repository.NewMaterialRepository(dataDir)
 	if err != nil {
@@ -18,6 +21,14 @@ func NewRouter(dataDir string) (*http.ServeMux, error) {
 	materialSvc := service.NewMaterialService(materialRepo)
 	materialHandler := NewMaterialHandler(materialSvc)
 	materialHandler.Register(mux)
+
+	helpRepo, err := repository.NewHelpRequestRepository(dataDir)
+	if err != nil {
+		return nil, err
+	}
+	helpSvc := service.NewHelpRequestService(helpRepo, hub)
+	helpHandler := NewHelpRequestHandler(helpSvc)
+	helpHandler.Register(mux)
 
 	return mux, nil
 }
