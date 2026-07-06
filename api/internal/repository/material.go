@@ -12,14 +12,14 @@ import (
 )
 
 type MaterialRepository struct {
-	mu       sync.RWMutex
-	dataDir  string
+	mu        sync.RWMutex
+	dataDir   string
 	materials map[string]model.Material
 }
 
 func NewMaterialRepository(dataDir string) (*MaterialRepository, error) {
 	r := &MaterialRepository{
-		dataDir:  dataDir,
+		dataDir:   dataDir,
 		materials: make(map[string]model.Material),
 	}
 	if err := r.loadFromDisk(); err != nil {

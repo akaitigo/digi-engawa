@@ -12,9 +12,9 @@ import (
 )
 
 type ClassroomRepository struct {
-	mu         sync.RWMutex
-	dataDir    string
-	classrooms map[string]model.Classroom
+	mu           sync.RWMutex
+	dataDir      string
+	classrooms   map[string]model.Classroom
 	participants map[string][]model.Participant
 }
 

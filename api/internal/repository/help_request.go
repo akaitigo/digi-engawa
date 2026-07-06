@@ -12,8 +12,8 @@ import (
 )
 
 type HelpRequestRepository struct {
-	mu      sync.RWMutex
-	dataDir string
+	mu       sync.RWMutex
+	dataDir  string
 	requests map[string]model.HelpRequest
 }
 
