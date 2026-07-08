@@ -11,8 +11,8 @@ import (
 )
 
 type ProgressRepository struct {
-	mu      sync.RWMutex
-	dataDir string
+	mu       sync.RWMutex
+	dataDir  string
 	progress map[string]model.LearnerProgress // key: participantID:materialID
 }
 

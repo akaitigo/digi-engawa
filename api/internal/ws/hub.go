@@ -19,9 +19,9 @@ type Message struct {
 }
 
 type Hub struct {
-	mu          sync.RWMutex
-	rooms       map[string]map[*Client]bool
-	totalCount  int
+	mu         sync.RWMutex
+	rooms      map[string]map[*Client]bool
+	totalCount int
 }
 
 func NewHub() *Hub {
