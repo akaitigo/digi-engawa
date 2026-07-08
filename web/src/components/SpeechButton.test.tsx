@@ -6,18 +6,22 @@ describe("SpeechButton", () => {
 	const mockSpeak = vi.fn();
 	const mockCancel = vi.fn();
 
+	// The component calls `new SpeechSynthesisUtterance()`, so the stub must be
+	// constructable. vitest 4 invokes mock implementations under `new`, which an
+	// arrow-function `mockImplementation` cannot satisfy.
+	class MockSpeechSynthesisUtterance {
+		lang = "";
+		rate = 1;
+		pitch = 1;
+		onend: (() => void) | null = null;
+		onerror: (() => void) | null = null;
+		constructor(public text: string) {}
+	}
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		// Mock SpeechSynthesisUtterance
-		const MockUtterance = vi.fn().mockImplementation(() => ({
-			lang: "",
-			rate: 1,
-			pitch: 1,
-			onend: null,
-			onerror: null,
-		}));
-		vi.stubGlobal("SpeechSynthesisUtterance", MockUtterance);
+		vi.stubGlobal("SpeechSynthesisUtterance", MockSpeechSynthesisUtterance);
 
 		Object.defineProperty(window, "speechSynthesis", {
 			value: {
